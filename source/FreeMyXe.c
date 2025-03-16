@@ -311,6 +311,24 @@ void __cdecl main()
 
     DbgPrint("CPU key: %s\n", cpu_key_string);
 
+    // Check if USB Is attached to port 0 or 1, then export CPU Key.
+
+    const char *usb_paths[] = {"usb0:/cpu_key.txt", "usb1:/cpu_key.txt"};
+    FILE *cpu_key_export = NULL;
+
+    for (int i = 0; i < 2; i++) {
+        cpu_key_export = fopen(usb_paths[i], "w");
+         if (cpu_key_export) {
+            fwrite(cpu_key_string, 1, strlen(cpu_key_string), cpu_key_export);
+            fclose(cpu_key_export);
+            DbgPrint("CPU key exported to: %s\n", usb_paths[i]);
+            break;
+        } else {
+            DbgPrint("Unable to export CPU Key to USB\n");
+            fclose(cpu_key_export);
+        }
+    }
+
     switch (XGetLanguage())
     {
         case XC_LANGUAGE_ENGLISH:
