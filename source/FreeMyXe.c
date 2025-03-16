@@ -324,7 +324,7 @@ void __cdecl main()
             DbgPrint("CPU key exported to: %s\n", usb_paths[i]);
             break;
         } else {
-            DbgPrint("Unable to export CPU Key to USB\n");
+            DbgPrint("Unable to export CPU Key to USB port %s\n", usb_paths[i]);
             fclose(cpu_key_export);
         }
     }
