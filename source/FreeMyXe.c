@@ -133,7 +133,7 @@ LocalisationMessages_t italian = {
     L"L'Hypervisor e il kernel sono stati patchati!\n\nLa tua CPU Key \u00E8:\n%S\n\nCodice sorgente di FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivertiti!"
 };
 
-// translation provided by Blyth93
+// translation provided by BlytheScythe
 LocalisationMessages_t serbian = {
     L"Uskoro po\u010Dinje zakrpa HV-a i kernela...\n\nTvoj CPU klju\u010D je:\n%S\n\nZapi\u0161i ga i \u010Duvaj na sigurnom mestu!",
     L"OK",
