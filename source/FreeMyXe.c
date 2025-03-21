@@ -133,6 +133,16 @@ LocalisationMessages_t italian = {
     L"L'Hypervisor e il kernel sono stati patchati!\n\nLa tua CPU Key \u00E8:\n%S\n\nCodice sorgente di FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivertiti!"
 };
 
+// translation provided by Blyth93
+LocalisationMessages_t serbian = {
+    L"Uskoro po\u010Dinje zakrpa HV-a i kernela...\n\nTvoj CPU klju\u010D je:\n%S\n\nZapi\u0161i ga i \u010Duvaj na sigurnom mestu!",
+    L"OK",
+    L"Jupi!",
+    L"Pokreni XeLL umesto toga",
+    L"Pokretanje XeLL-a nije uspelo?! Nema veze, ipak \u0107u zakrpiti HV i kernel...",
+    L"Hypervisor i kernel su uspe\u0161no zakrpljeni!\n\nTvoj CPU klju\u010D je:\n%S\n\nIzvorni kod za FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nU\u017Eivaj!"
+};
+
 LocalisationMessages_t *currentLocalisation = &english;
 
 static LPWSTR buttons[1] = {L"OK"};
