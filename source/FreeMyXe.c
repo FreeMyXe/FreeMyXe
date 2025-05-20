@@ -53,14 +53,14 @@ LocalisationMessages_t polish = {
     L"Hiperwizor i j\u0105dro zosta\u0142y za\u0142atane!\n\nTw\u00f3j klucz CPU to:\n%S\n\nKod \u017ar\u00f3d\u0142owy FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nMi\u0142ej zabawy!"
 };
 
-// translation provided by Xyozus
+// translation provided by Xyozus (fixed by Creativezito)
 LocalisationMessages_t brazilian_portuguese = {
-    L"Prestes a come\u00E7ar a aplicar patches no HV e no Kernel...\n\nSua chave de CPU \u00E9:\n%S\n\nEscreva isso e guarde em algum lugar seguro!",
+    L"Come\u00E7ando a aplicar patches no HV e no Kernel...\n\nSua chave de CPU \u00E9:\n%S\n\nEscreva isso e guarde em algum lugar seguro!",
     L"OK",
-    L"De acordo!",
+    L"Isso Ai!",
     L"Inicie o XeLL em vez disso",
-    L"Falha ao iniciar o XeLL?! Ah, bem, vou corrigir o HV e o Kernel de qualquer maneira...",
-    L"O Hipervisor e o Kernel foram corrigidos!\n\nSua chave de CPU \u00E9:\n%S\n\nC\u00F3digo fonte para FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nAproveite!"
+    L"Falha ao iniciar o XeLL?! Sem problemas, irei corrigir o HV e o Kernel de qualquer maneira...",
+    L"O Hypervisor e o Kernel foram corrigidos!\n\nSua chave de CPU \u00E9:\n%S\n\nC\u00F3digo fonte para FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nAproveite!"
 };
 
 // translation provided by Animadoria
