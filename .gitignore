@@ -2,6 +2,7 @@ build/
 out/
 package/
 extras/LaunchDashlaunch
+extras/RB3EnhancedLoader
 *.exe
 *.xex
 *.dll

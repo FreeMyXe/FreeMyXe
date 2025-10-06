@@ -12,7 +12,73 @@
 #include "fs.h"
 #include "hv_funcs.h"
 #include "version.h"
-#include "locale.h"
+#include "fmx_locale.h"
+
+typedef enum _autoboot_e {
+    autoMode_Off,
+    autoMode_Patch,
+    autoMode_Xell
+} autoboot_e;
+
+// returns 1 to disable the live block
+int DoesUserAdmitThatThisIsAnIllAdvisedDecision()
+{
+    static char expected_admission[] = "By making this file, I know this is a bad idea. Enable Live!";
+    char admission_buf[sizeof(expected_admission)] = {0};
+    int fd = -1;
+    // check if the autoboot file exists
+    if (!FSFileExists("GAME:\\FreeMyXe_liveBADIDEA.txt"))
+        return 0;
+    fd = FSOpenFile("GAME:\\FreeMyXe_liveBADIDEA.txt");
+    if (fd == -1)
+        return 0;
+    FSReadFile(fd, 0, admission_buf, sizeof(admission_buf));
+    FSCloseFile(fd);
+    // https://youtu.be/juBv2XWnwt8?t=412
+    if (strcmp(expected_admission, admission_buf) == 0)
+        return 1;
+    return 0;
+}
+
+// see autoboot_e enum
+int GetAutobootMode()
+{
+    char fileBuffer[8] = {0};
+    int fd = -1;
+    // check if the autoboot file exists
+    if (!FSFileExists("GAME:\\FreeMyXe_auto.txt"))
+    {
+        DbgPrint("No automatic configuration found.\n");
+        return autoMode_Off;
+    }
+    // open and read it
+    fd = FSOpenFile("GAME:\\FreeMyXe_auto.txt");
+    if (fd == -1)
+    {
+        DbgPrint("Failed to load automatic configuration.\n");
+        return autoMode_Off;
+    }
+    FSReadFile(fd, 0, fileBuffer, sizeof(fileBuffer));
+    FSCloseFile(fd);
+    // see which mode we should be in
+    if (strnicmp(fileBuffer, "patch", 5) == 0)
+    {
+        DbgPrint("Will automatically patch HV/kernel.\n");
+        return autoMode_Patch;
+    }
+    else if (strnicmp(fileBuffer, "xell", 4) == 0)
+    {
+        DbgPrint("Will automatically launch XeLL.\n");
+        return autoMode_Xell;
+    }
+    else if (strnicmp(fileBuffer, "off", 3) == 0)
+    {
+        return autoMode_Off;
+    }
+    // default
+    DbgPrint("Unknown config value; defaulting to off.\n");
+    return autoMode_Off;
+}
 
 LocalisationMessages_t english = {
     L"About to start patching HV and kernel...\n\nYour CPU key is:\n%S\n\nWrite that down and keep it safe!",
@@ -20,17 +86,19 @@ LocalisationMessages_t english = {
     L"Yay!",
     L"Launch XeLL instead",
     L"Failed to launch XeLL?! Oh well, I'll patch the HV and kernel anyway...",
-    L"Hypervisor and kernel have been patched!\n\nYour CPU key is:\n%S\n\nSource code for FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nHave fun!"
+    L"Hypervisor and kernel have been patched!\n\nYour CPU key is:\n%S\n\nSource code for FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nHave fun!",
+    L"Hypervisor and kernel have been patched!"
 };
 
 // translation provided by lexd0g
 LocalisationMessages_t spanish = {
-    L"A punto de empezar a parchear el hipervisor y el kernel...\n\nLa clave de tu CPU es:\n%S\n\nEscr\u00EDbela y mantela segura!",
+    L"A punto de empezar a parchear el hipervisor y el kernel...\n\nLa clave de tu CPU es:\n%S\n\nEscr\u00EDbela y mantenla segura!",
     L"Vale",
     L"Yupi!",
     L"Lanzar XeLL en su lugar",
     L"XeLL no se ha podido iniciar?! Bueno, parcheare el hipervisor y el kernel de todos modos...",
-    L"El hipervisor y el kernel han sido parcheados!\n\nLa clave de tu CPU es:\n%S\n\nC\u00F3digo fuente de FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivi\u00E9rtete!"
+    L"El hipervisor y el kernel han sido parcheados!\n\nLa clave de tu CPU es:\n%S\n\nC\u00F3digo fuente de FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivi\u00E9rtete!",
+    L"El hipervisor y el kernel han sido parcheados!"
 };
 
 // translation provided by needmorepaper
@@ -40,7 +108,8 @@ LocalisationMessages_t canadian_french = {
     L"Bravo !",
     L"D\u00E9marrer XeLL au lieu de FreeMyXe",
     L"On \u00E9choue \u00E0 d\u00E9marrer XeLL ?! Bon, de toute fa\u00E7on je vais corriger l'hyperviseur et le noyau...",
-    L"L'hyperviseur et le noyau sont corrig\u00E9s!\n\nVotre cl\u00E9 de l'unit\u00E9 centrale est :\n%S\n\nLe code source pour FreeMyXe :\ngithub.com/FreeMyXe/FreeMyXe\n\n"
+    L"L'hyperviseur et le noyau sont corrig\u00E9s!\n\nVotre cl\u00E9 de l'unit\u00E9 centrale est :\n%S\n\nLe code source pour FreeMyXe :\ngithub.com/FreeMyXe/FreeMyXe\n\n",
+    L"L'hyperviseur et le noyau sont corrig\u00E9s!"
 };
 
 // translation provided by chackAJMCPE and DoruDoLasu
@@ -50,17 +119,19 @@ LocalisationMessages_t polish = {
     L"Jupii!!",
     L"Zamiast tego uruchom XeLL",
     L"XeLL nie wystartowa\u0142?! No trudno, w takim razie za\u0142atamy HV i j\u0105dro...",
-    L"Hiperwizor i j\u0105dro zosta\u0142y za\u0142atane!\n\nTw\u00f3j klucz CPU to:\n%S\n\nKod \u017ar\u00f3d\u0142owy FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nMi\u0142ej zabawy!"
+    L"Hiperwizor i j\u0105dro zosta\u0142y za\u0142atane!\n\nTw\u00f3j klucz CPU to:\n%S\n\nKod \u017ar\u00f3d\u0142owy FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nMi\u0142ej zabawy!",
+    L"Hiperwizor i j\u0105dro zosta\u0142y za\u0142atane!"
 };
 
-// translation provided by Xyozus
+// translation provided by Xyozus and lucmsilva651
 LocalisationMessages_t brazilian_portuguese = {
-    L"Prestes a come\u00E7ar a aplicar patches no HV e no Kernel...\n\nSua chave de CPU \u00E9:\n%S\n\nEscreva isso e guarde em algum lugar seguro!",
+    L"Prestes a come\u00E7ar os patches no HV e no Kernel...\n\nSua chave de CPU \u00E9:\n%S\n\nAnote isso e guarde em algum lugar seguro!",
     L"OK",
-    L"De acordo!",
-    L"Inicie o XeLL em vez disso",
-    L"Falha ao iniciar o XeLL?! Ah, bem, vou corrigir o HV e o Kernel de qualquer maneira...",
-    L"O Hipervisor e o Kernel foram corrigidos!\n\nSua chave de CPU \u00E9:\n%S\n\nC\u00F3digo fonte para FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nAproveite!"
+    L"A\u00ED sim!",
+    L"Iniciar o XeLL ao vez disso",
+    L"Falha ao iniciar o XeLL?! Meh, vou fazer o patch no HV e no Kernel mesmo assim...",
+    L"Foram aplicados os patches no HV e no Kernel!\n\nSua chave de CPU \u00E9:\n%S\n\nC\u00F3digo fonte para o FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nAproveita!",
+    L"Foram aplicados os patches no HV e no Kernel!"
 };
 
 // translation provided by Animadoria
@@ -70,7 +141,8 @@ LocalisationMessages_t portuguese = {
     L"Boa!",
     L"Iniciar XeLL em vez disso",
     L"Erro ao iniciar XeLL?! Bem, vou corrigir o HV e o kernel de qualquer forma...",
-    L"Hypervisor e kernel foram corrigidos!\n\nA chave do seu CPU \u00E9:\n%S\n\nC\u00F3digo fonte para o FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivirta-se!"
+    L"Hypervisor e kernel foram corrigidos!\n\nA chave do seu CPU \u00E9:\n%S\n\nC\u00F3digo fonte para o FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivirta-se!",
+    L"Hypervisor e kernel foram corrigidos!"
 };
 
 // translation provided by tuxuser
@@ -80,7 +152,8 @@ LocalisationMessages_t german = {
     L"Yup!",
     L"Stattdessen XeLL starten",
     L"XeLL starten fehlgeschlagen?! Hmmm, ich patche trotzdem nun HV und Kernel ...",
-    L"Hypervisor und Kernel wurden gepatcht!\n\nDer CPU Key ist:\n%S\n\nSource code von FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nViel Spa\u00DF!"
+    L"Hypervisor und Kernel wurden gepatcht!\n\nDer CPU Key ist:\n%S\n\nSource code von FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nViel Spa\u00DF!",
+    L"Hypervisor und Kernel wurden gepatcht!"
 };
 
 // translation provided by eversiege and veselcraft
@@ -90,7 +163,8 @@ LocalisationMessages_t russian = {
     L"\u0423\u0440\u0430!",
     L"\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C XeLL",
     L"\u041D\u0435\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E \u0437\u0430\u043F\u0443\u0442\u0438\u0442\u044C XeLL?! \u041D\u0443 \u0447\u0442\u043E \u0436, \u0432\u0441\u0451 \u0440\u0430\u0432\u043D\u043E \u043F\u0430\u0442\u0447\u0438\u043C HV \u0438 \u044F\u0434\u0440\u043E...",
-    L"\u0413\u0438\u043F\u0435\u0440\u0432\u0438\u0437\u043E\u0440 \u0438 \u044F\u0434\u0440\u043E \u0431\u044B\u043B\u0438 \u043F\u0440\u043E\u043F\u0430\u0442\u0447\u0435\u043D\u044B!\n\n\u0412\u0430\u0448 \u043A\u043B\u044E\u0447 CPU:\n%S\n\n\u0418\u0441\u0445\u043E\u0434\u043D\u044B\u0439 \u043A\u043E\u0434 \u0434\u043B\u044F FreeMyXe \u043D\u0430\u0445\u043E\u0434\u0438\u0442\u0441\u044F \u0442\u0443\u0442:\ngithub.com/FreeMyXe/FreeMyXe\n\n\u0412\u0435\u0441\u0435\u043B\u0438\u0442\u0435\u0441\u044C!"
+    L"\u0413\u0438\u043F\u0435\u0440\u0432\u0438\u0437\u043E\u0440 \u0438 \u044F\u0434\u0440\u043E \u0431\u044B\u043B\u0438 \u043F\u0440\u043E\u043F\u0430\u0442\u0447\u0435\u043D\u044B!\n\n\u0412\u0430\u0448 \u043A\u043B\u044E\u0447 CPU:\n%S\n\n\u0418\u0441\u0445\u043E\u0434\u043D\u044B\u0439 \u043A\u043E\u0434 \u0434\u043B\u044F FreeMyXe \u043D\u0430\u0445\u043E\u0434\u0438\u0442\u0441\u044F \u0442\u0443\u0442:\ngithub.com/FreeMyXe/FreeMyXe\n\n\u0412\u0435\u0441\u0435\u043B\u0438\u0442\u0435\u0441\u044C!",
+    L"\u0413\u0438\u043F\u0435\u0440\u0432\u0438\u0437\u043E\u0440 \u0438 \u044F\u0434\u0440\u043E \u0431\u044B\u043B\u0438 \u043F\u0440\u043E\u043F\u0430\u0442\u0447\u0435\u043D\u044B!"
 };
 
 // translation provided by Helloyunho
@@ -100,7 +174,8 @@ LocalisationMessages_t korean = {
     L"\uC608\uC774!",
     L"XeLL \uC2E4\uD589\uD558\uAE30",
     L"XeLL\uC744 \uC2E4\uD589\uD558\uB294\uB370 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4?! \uBB50, \uC81C\uAC00 \uC9C1\uC811 \uD558\uC774\uD37C\uBC14\uC774\uC800\uC640 \uCEE4\uB110\uC744 \uD328\uCE58\uD560\uAC8C\uC694...",
-    L"\uD558\uC774\uD37C\uBC14\uC774\uC800\uC640 \uCEE4\uB110\uC774 \uD328\uCE58\uB418\uC5C8\uC2B5\uB2C8\uB2E4!\n\nCPU \uD0A4:\n%S\n\nFreeMyXe \uC18C\uC2A4 \uCF54\uB4DC:\ngithub.com/FreeMyXe/FreeMyXe\n\n\uC88B\uC740 \uD558\uB8E8 \uB418\uC138\uC694!"
+    L"\uD558\uC774\uD37C\uBC14\uC774\uC800\uC640 \uCEE4\uB110\uC774 \uD328\uCE58\uB418\uC5C8\uC2B5\uB2C8\uB2E4!\n\nCPU \uD0A4:\n%S\n\nFreeMyXe \uC18C\uC2A4 \uCF54\uB4DC:\ngithub.com/FreeMyXe/FreeMyXe\n\n\uC88B\uC740 \uD558\uB8E8 \uB418\uC138\uC694!",
+    L"\uD558\uC774\uD37C\uBC14\uC774\uC800\uC640 \uCEE4\uB110\uC774 \uD328\uCE58\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
 };
 
 // translation provided by Mez0ne
@@ -110,7 +185,8 @@ LocalisationMessages_t chinese_simplified = {
     L"\u8036\uFF01",
     L"\u542F\u52A8 XeLL",
     L"\u672A\u80FD\u542F\u52A8 XeLL\uFF1F\uFF01\u597D\u5427\uFF0C\u4E0D\u7BA1\u600E\u6837\uFF0C\u6211\u90FD\u4F1A\u4FEE\u8865 Hypervisor \u548C\u5185\u6838...",
-    L"Hypervisor \u548C\u5185\u6838\u5DF2\u88AB\u4FEE\u8865\uFF01\n\n\u4F60\u7684 CPU \u5BC6\u94A5\u662F\uFF1A\n%S\n\nFreeMyXe \u7684\u6E90\u4EE3\u7801\uFF1A\ngithub.com/FreeMyXe/FreeMyXe\n\n\u73A9\u5F97\u5F00\u5FC3\uFF01"
+    L"Hypervisor \u548C\u5185\u6838\u5DF2\u88AB\u4FEE\u8865\uFF01\n\n\u4F60\u7684 CPU \u5BC6\u94A5\u662F\uFF1A\n%S\n\nFreeMyXe \u7684\u6E90\u4EE3\u7801\uFF1A\ngithub.com/FreeMyXe/FreeMyXe\n\n\u73A9\u5F97\u5F00\u5FC3\uFF01",
+    L"Hypervisor \u548C\u5185\u6838\u5DF2\u88AB\u4FEE\u8865\uFF01"
 };
 
 // translation provided by Tozzi89
@@ -120,7 +196,8 @@ LocalisationMessages_t swedish = {
     L"Jippi!!",
     L"Starta XeLL ist\u00E4llet",
     L"Kunde inte starta XeLL?! Vi tar och patchar hypervisor och k\u00E4rnan \u00E4nd\u00E5...",
-    L"Hypervisor och k\u00E4rnan har blivit patchad!\n\nDin CPU nyckel \u00E4r:\n%S\n\nK\u00E4llkoden f\u00F6r FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nHa s\u00E5 kul!"
+    L"Hypervisor och k\u00E4rnan har blivit patchad!\n\nDin CPU nyckel \u00E4r:\n%S\n\nK\u00E4llkoden f\u00F6r FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nHa s\u00E5 kul!",
+    L"Hypervisor och k\u00E4rnan har blivit patchad!"
 };
 
 // translation provided by Razorbacktrack
@@ -130,7 +207,19 @@ LocalisationMessages_t italian = {
     L"Fantastico!",
     L"Avvia XeLL invece",
     L"Non riesco ad avviare XeLL?! Beh, patcher\u00F2 comunque l'Hypervisor e il kernel...",
-    L"L'Hypervisor e il kernel sono stati patchati!\n\nLa tua CPU Key \u00E8:\n%S\n\nCodice sorgente di FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivertiti!"
+    L"L'Hypervisor e il kernel sono stati patchati!\n\nLa tua CPU Key \u00E8:\n%S\n\nCodice sorgente di FreeMyXe:\ngithub.com/FreeMyXe/FreeMyXe\n\nDivertiti!",
+    L"L'Hypervisor e il kernel sono stati patchati!"
+};
+
+// translation provided by MitsuTM and CZ2746isback
+LocalisationMessages_t japanese = {
+    L"\u30cf\u30a4\u30d1\u30fc\u30d0\u30a4\u30b6\u30fc\u3068\u30ab\u30fc\u30cd\u30eb\u306e\u30d1\u30c3\u30c1\u3092\u958b\u59cb\u3057\u307e\u3059...\n\nCPU\u30ad\u30fc:\n%S\n\n\u30e1\u30e2\u3057\u3066\u5b89\u5168\u306b\u4fdd\u7ba1\u3057\u3066\u304f\u3060\u3055\u3044\uff01",
+    L"OK",
+    L"\u3084\u3063\u305f\uff01",
+    L"\u4ee3\u308f\u308a\u306bXeLL\u3092\u8d77\u52d5",
+    L"XeLL\u306e\u8d77\u52d5\u306b\u5931\u6557\uff1f\uff01\u307e\u3042\u3044\u3044\u3001\u3068\u306b\u304b\u304f\u30cf\u30a4\u30d1\u30fc\u30d0\u30a4\u30b6\u30fc\u3068\u30ab\u30fc\u30cd\u30eb\u3092\u30d1\u30c3\u30c1\u3059\u308b\u3088...",
+    L"\u30cf\u30a4\u30d1\u30fc\u30d0\u30a4\u30b6\u30fc\u3068\u30ab\u30fc\u30cd\u30eb\u306e\u30d1\u30c3\u30c1\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f\uff01\n\nCPU\u30ad\u30fc:\n%S\n\nFreeMyXe\u306e\u30bd\u30fc\u30b9\u30b3\u30fc\u30c9:\ngithub.com/FreeMyXe/FreeMyXe\n\n\u697d\u3057\u3093\u3067\uff01",
+    L"\u30cf\u30a4\u30d1\u30fc\u30d0\u30a4\u30b6\u30fc\u3068\u30ab\u30fc\u30cd\u30eb\u306e\u30d1\u30c3\u30c1\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f\uff01"
 };
 
 LocalisationMessages_t *currentLocalisation = &english;
@@ -274,6 +363,28 @@ void ApplyXeBuildPatches(uint8_t *patch_data)
     }
 }
 
+typedef void (*XNotifyQueueUI_t)(uint32_t type, uint32_t userIndex, uint64_t areas, const wchar_t *displayText, void *pContextData);
+XNotifyQueueUI_t XNotifyQueueUI = NULL;
+void ResolveXamFunctions()
+{
+    HANDLE handle = NULL;
+    uint32_t addr = 0;
+    XexGetModuleHandle("xam.xex", &handle);
+    if (handle == NULL)
+        return;
+    XexGetProcedureAddress(handle, 656, &addr);
+    if (addr != 0)
+        XNotifyQueueUI = (XNotifyQueueUI_t)addr;
+}
+
+void NotificationPopup(wchar_t *text)
+{
+    if (XNotifyQueueUI != NULL)
+    {
+        XNotifyQueueUI(14, 0, XNOTIFY_SYSTEM, text, NULL);
+    }
+}
+
 static uint8_t xell_buffer[0x40000];
 void LaunchXell()
 {
@@ -329,10 +440,21 @@ void __cdecl main()
     // thanks libxenon!
     uint8_t rol_led_buf[16] = {0x99,0x00,0x00,0,0,0,0,0,0,0,0,0,0,0,0,0};
     int has_xell = 0;
+    int autoMode = autoMode_Off;
+    int disable_liveblock = 0;
 
     memset(cpu_key, 0, sizeof(cpu_key));
 
     DbgPrint("FreeMyXe!\n");
+
+    // resolve XNotifyQueueUI
+    ResolveXamFunctions();
+
+    // check which automatic boot mode we should be in
+    autoMode = GetAutobootMode();
+
+    // check if we should make a mistake
+    disable_liveblock = DoesUserAdmitThatThisIsAnIllAdvisedDecision();
 
     // call the boot animation
     DbgPrint("Sending LED command to fix ring of light state\n");
@@ -358,6 +480,10 @@ void __cdecl main()
 
     // check if we have a xell file
     has_xell = FSFileExists("GAME:\\xell-1f.bin") || FSFileExists("GAME:\\xell-gggggg.bin") || FSFileExists("GAME:\\xell-2f.bin");
+
+    // if we're automatically launch xell but don't have xell, act like normal
+    if (autoMode == autoMode_Xell && !has_xell)
+        autoMode = autoMode_Off;
 
     DbgPrint("CPU key: %s\n", cpu_key_string);
 
@@ -399,6 +525,9 @@ void __cdecl main()
         case XC_LANGUAGE_SCHINESE:
             currentLocalisation = &chinese_simplified;
             break;
+        case XC_LANGUAGE_JAPANESE:
+            currentLocalisation = &japanese;
+            break;
         default:
             currentLocalisation = &english;
             break;
@@ -410,7 +539,16 @@ void __cdecl main()
 
     if (has_xell)
     {
-        int pick_result = MessageBoxMulti(dialog_text_buffer, currentLocalisation->ok, currentLocalisation->launch_xell_instead);
+        int pick_result = 0;
+        // check auto mode - if it's set to XeLL act like the user pressed "Launch XeLL"
+        if (autoMode == autoMode_Xell)
+            pick_result = 1;
+        // if it's set to patch act like the user pressed OK
+        else if (autoMode == autoMode_Patch)
+            pick_result = 0;
+        // otherwise, prompt the user
+        else
+            pick_result = MessageBoxMulti(dialog_text_buffer, currentLocalisation->ok, currentLocalisation->launch_xell_instead);
         if (pick_result == 1)
         {
             LaunchXell();
@@ -419,7 +557,9 @@ void __cdecl main()
     }
     else
     {
-        MessageBox(dialog_text_buffer);
+        // if auto mode isn't set to patch, ask the user for confirmation
+        if (autoMode != autoMode_Patch)
+            MessageBox(dialog_text_buffer);
     }
 
     DbgPrint("Writing syscall 0 backdoor...\n");
@@ -626,17 +766,27 @@ void __cdecl main()
 
     Sleep(50);
     
-    // block xbox live by poking these domains to something that'll never be real
-    strcpy((void *)(0x815ff238), "XEXDS.XBOX.INVALID");
-    strcpy((void *)(0x815ff250), "XETGS.XBOX.INVALID");
-    strcpy((void *)(0x815ff268), "XEAS.XBOX.INVALID");
-    strcpy((void *)(0x815ff27c), "XEMACS.XBOX.INVALID");
+    if (disable_liveblock == 0)
+    {
+        // block xbox live by poking these domains to something that'll never be real
+        strcpy((void *)(0x815ff238), "XEXDS.XBOX.INVALID");
+        strcpy((void *)(0x815ff250), "XETGS.XBOX.INVALID");
+        strcpy((void *)(0x815ff268), "XEAS.XBOX.INVALID");
+        strcpy((void *)(0x815ff27c), "XEMACS.XBOX.INVALID");
+    }
+    else
+    {
+        DbgPrint("SOMETHING'S WRONG I CAN FEEL IT\n");
+    }
 
     // patch calls to XexCheckExecutablePrivilege(6) to allow insecure sockets everywhere
     POKE_32(0x817450d4, LI(3, 1));
     POKE_32(0x8174c174, LI(3, 1));
     POKE_32(0x81774590, LI(3, 1));
     POKE_32(0x81810084, LI(3, 1));
+
+    // patch to allow notifications to be displayed in more situations
+    POKE_32(0x816A3158, 0x4800001C);
 
     // syslink ping patch - 30ms check in CXnIp::IpRecvKeyExXbToXb
     POKE_32(0x81754230, NOP);
@@ -645,7 +795,25 @@ void __cdecl main()
 
     Sleep(450);
 
-    buttons[0] = currentLocalisation->yay;
-    wsprintfW(dialog_text_buffer, currentLocalisation->patch_successful, cpu_key_string);
-    MessageBox(dialog_text_buffer);
+    if (autoMode != autoMode_Patch)
+    {
+        buttons[0] = currentLocalisation->yay;
+        wsprintfW(dialog_text_buffer, currentLocalisation->patch_successful, cpu_key_string);
+        MessageBox(dialog_text_buffer);
+    }
+    else
+    {
+        wsprintfW(dialog_text_buffer, L"%s\ngithub.com/FreeMyXe/FreeMyXe " FREEMYXE_VERSION, currentLocalisation->patch_successful_notif);
+        NotificationPopup(dialog_text_buffer);
+    }
+
+    // check if either of our post-patch XEX files exist
+    if (FSFileExists("GAME:\\after_patch.xex"))
+    {
+        XLaunchNewImage("GAME:\\after_patch.xex", 0);
+    }
+    else if (FSFileExists("GAME:\\Dashboard\\default.xex"))
+    {
+        XLaunchNewImage("GAME:\\Dashboard\\default.xex", 0);
+    }
 }
