@@ -363,6 +363,55 @@ void ApplyXeBuildPatches(uint8_t *patch_data)
     }
 }
 
+typedef BOOLEAN (*BadStorage_Execute_t)(BOOLEAN *pRetailFormatted);
+BadStorage_Execute_t BadStorage_Execute = NULL;
+int PerformBadStoragePatches() // 0 = skipped, 1 = applied, -1 = failed
+{
+    HMODULE hm;
+    if (FSFileExists("GAME:\\BadStorage.dll") == 0)
+    {
+        DbgPrint("Skipping Bad Storage - DLL not found.\n");
+        return 0;
+    }
+    hm = LoadLibrary("GAME:\\BadStorage.dll");
+    if (hm != NULL)
+    {
+        BOOLEAN r = FALSE;
+        BOOLEAN retailFormatted = FALSE;
+        BadStorage_Execute = (BadStorage_Execute_t)GetProcAddress(hm, (LPCSTR)1);
+        if (BadStorage_Execute == NULL)
+        {
+            DbgPrint("Bad Storage failed - function not found.\n");
+            return -1;
+        }
+        r = BadStorage_Execute(&retailFormatted);
+        FreeLibrary(hm); // free the library after using it
+        if (r == FALSE)
+        {
+            if (retailFormatted)
+            {
+                DbgPrint("Skipping Bad Storage - drive is retail formatted.\n");
+                return 0;
+            }
+            else
+            {
+                DbgPrint("Bad Storage failed - error.\n");
+                return -1;
+            }
+        }
+        else
+        {
+            DbgPrint("Bad Storage success!\n");
+            return 1;
+        }
+    }
+    else
+    {
+        DbgPrint("Skipping Bad Storage - DLL failed to load.\n");
+        return 0;
+    }
+}
+
 typedef void (*XNotifyQueueUI_t)(uint32_t type, uint32_t userIndex, uint64_t areas, const wchar_t *displayText, void *pContextData);
 XNotifyQueueUI_t XNotifyQueueUI = NULL;
 void ResolveXamFunctions()
@@ -392,11 +441,6 @@ void LaunchXell()
     int xell_filesize = 0;
     int xell_bytesread = 0;
     int xell_2f = 0;
-    // check for glitch xell
-    if (xell_file == -1)
-    {
-        xell_file = FSOpenFile("GAME:\\xell-gggggg.bin");
-    }
     // check for 2f xell
     if (xell_file == -1)
     {
@@ -442,6 +486,7 @@ void __cdecl main()
     int has_xell = 0;
     int autoMode = autoMode_Off;
     int disable_liveblock = 0;
+    int badstorage_r = 0;
 
     memset(cpu_key, 0, sizeof(cpu_key));
 
@@ -479,7 +524,7 @@ void __cdecl main()
     sprintf(cpu_key_string, "%08X%08X%08X%08X", *(uint32_t *)(cpu_key + 0x0), *(uint32_t *)(cpu_key + 0x4), *(uint32_t *)(cpu_key + 0x8), *(uint32_t *)(cpu_key + 0xC));
 
     // check if we have a xell file
-    has_xell = FSFileExists("GAME:\\xell-1f.bin") || FSFileExists("GAME:\\xell-gggggg.bin") || FSFileExists("GAME:\\xell-2f.bin");
+    has_xell = FSFileExists("GAME:\\xell-1f.bin") || FSFileExists("GAME:\\xell-2f.bin");
 
     // if we're automatically launch xell but don't have xell, act like normal
     if (autoMode == autoMode_Xell && !has_xell)
@@ -790,6 +835,9 @@ void __cdecl main()
 
     // syslink ping patch - 30ms check in CXnIp::IpRecvKeyExXbToXb
     POKE_32(0x81754230, NOP);
+
+    // apply bad storage patches
+    badstorage_r = PerformBadStoragePatches();
     
     DbgPrint("Done\n");
 
@@ -799,11 +847,16 @@ void __cdecl main()
     {
         buttons[0] = currentLocalisation->yay;
         wsprintfW(dialog_text_buffer, currentLocalisation->patch_successful, cpu_key_string);
+        if (badstorage_r == 1)
+            wcscat(dialog_text_buffer, L"\n\nBadStorage OK!\ngithub.com/EatonZ/BadStorage");
         MessageBox(dialog_text_buffer);
     }
     else
     {
-        wsprintfW(dialog_text_buffer, L"%s\ngithub.com/FreeMyXe/FreeMyXe " FREEMYXE_VERSION, currentLocalisation->patch_successful_notif);
+        if (badstorage_r == 1)
+            wsprintfW(dialog_text_buffer, L"%s [+BadStorage]\ngithub.com/FreeMyXe/FreeMyXe " FREEMYXE_VERSION, currentLocalisation->patch_successful_notif);
+        else
+            wsprintfW(dialog_text_buffer, L"%s\ngithub.com/FreeMyXe/FreeMyXe " FREEMYXE_VERSION, currentLocalisation->patch_successful_notif);
         NotificationPopup(dialog_text_buffer);
     }
 

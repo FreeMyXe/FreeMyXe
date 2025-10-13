@@ -39,6 +39,8 @@ you have been scammed!
   start running the exploit!*
 * An option to automatically patch without a prompt, or automatically boot into
   XeLL.
+* Support for internal hard drives and SSDs over 500GB thanks to
+  [Bad Storage by Eaton Works](https://fatxplorer.eaton-works.com/bad-storage/).
 
 ### Patches
 
@@ -64,6 +66,11 @@ again. This is included in FreeMyXe beta4 and above.
 * [Emma / InvoxiPlayGames](https://github.com/InvoxiPlayGames) - lead developer
 * [Swizzy](https://github.com/Swizzy) - maintainer
 
+### Third-Party Components
+
+* [Free60 Project](https://github.com/Free60Project) - XeLL Reloaded
+* [Eaton Works](https://eaton-works.com/) - BadStorage
+
 ## Copyright
 
 FreeMyXe © Copyright FreeMyXe Team, 2025
@@ -81,6 +88,14 @@ own personal use, however if you are sharing with others:
 * The source code of your modifications must be available to everyone who
   has your modification.
 
+### Third-Party Components
+
+FreeMyXe includes BadStorage by Eaton Works, licensed under the MIT License.
+The full MIT license text can be found in the release README and in
+[external/BadStorage_LICENSE.txt](external/BadStorage_LICENSE.txt) in the
+FreeMyXe repository. The source code to the BadStorage DLL can be found at
+https://github.com/EatonZ/BadStorage.
+
 ## Credits and Shoutouts
 
 * ikari's original freeBOOT
@@ -94,6 +109,7 @@ own personal use, however if you are sharing with others:
   [XeLL](https://github.com/Octal450/xell-reloaded).
 * Byrom90 for help with Freeboot patches.
 * Hayzen for the XNotify permissions patch.
+* Eaton Works for Bad Storage.
 
 (let me know if I got anything wrong!)
 
