@@ -1,6 +1,6 @@
 # FreeMyXe
 
-Xbox 360 executable designed to apply freedom-unlocking patches from xeBuild
+XBOX 360 executable designed to apply freedom-unlocking patches from xeBuild
 to the kernel and hypervisor at runtime. For use with Grimdoomer's
 [Xbox360BadUpdate](https://github.com/grimdoomer/Xbox360BadUpdate) hypervisor
 exploit.
@@ -19,24 +19,24 @@ you have been scammed!
 > CONSOLE!** I am not responsible for any damage you cause to your own hardware.
 
 > [!WARNING] 
-> Completely disconnect from Xbox Live and the internet before running BadUpdate
-> and do NOT reconnect, and do NOT run homebrew with an Xbox Live-enabled profile.
-> **You could risk a ban!**
-> I am not responsible for any Xbox Live console bans or account bans caused by
-> using FreeMyXe.
+> Completely disconnect from the XBOX network and the internet before running
+> BadUpdate and do NOT reconnect, and do NOT run homebrew with an XBOX
+> network-enabled profile. **You could risk a ban!**
+> I am not responsible for any XBOX network console bans or account bans caused
+> by using Bad Update or FreeMyXe.
 
 ## Features
 
 * Displays CPU key front-and-center. Write that down!
-* Allows launching XeLL if you have `xell-1f.bin`, `xell-2f.bin` or 
+* Allows launching XeLL if you have `xell.bin`, `xell-1f.bin`, `xell-2f.bin` or 
   `xell-gggggg.bin` in the BadUpdatePayload folder.
 * Allows unsigned content (homebrew, like XeXMenu) to be launched and loaded
   from the dashboard.
 * Allows automatically launching homebrew after patching if named
   `after_patch.xex` in the BadUpdatePayload folder, or if named `default.xex`
   in a folder named Dashboard inside the BadUpdatePayload folder.
-* Disables connecting to Xbox Live. *You **MUST** still disconnect before you
-  start running the exploit!*
+* Disables connecting to the XBOX network. *You **MUST** still disconnect before
+  you start running the exploit!*
 * An option to automatically patch without a prompt, or automatically boot into
   XeLL.
   See [Automatic Patching](https://github.com/FreeMyXe/FreeMyXe/wiki/Automatic-Patching)
@@ -56,9 +56,9 @@ you have been scammed!
 * Patches USB controller authentication check (a-la "UsbdSecPatch") to let
   certain compatible controllers and adapters work. That's for you, Mario.
 
-### Original Xbox support
+### Original XBOX support
 
-As of FreeMyXe 1.2, Original Xbox games will just launch and run fine. There is
+As of FreeMyXe 1.2, Original XBOX games will just launch and run fine. There is
 no need to run "OGXboxPrep.xex" and it is no longer included in FreeMyXe.
 
 ## Developers and Contributors
@@ -106,7 +106,7 @@ https://github.com/EatonZ/BadStorage.
 * Free60 project for [libxenon](https://github.com/Free60Project/libxenon) and
   [XeLL Reloaded](https://github.com/Free60Project/xell-reloaded).
 * Octal450 and DrTrinity for an updated Winchester-compatible
-  [XeLL](https://github.com/Octal450/xell-reloaded).
+  [XeLL](https://github.com/Octal450/xell-reloaded). (No longer used.)
 * Byrom90 for help with Freeboot patches.
 * Hayzen for the XNotify permissions patch.
 * Eaton Works for Bad Storage.
@@ -131,3 +131,10 @@ Thank you to everyone who helped
 * Korean - by [Helloyunho](https://github.com/Helloyunho)
 * Chinese (Simplified) - by [Mez0ne](https://github.com/Mez0ne)
 * Japanese - by [MitsuTM](https://github.com/MitsuTM) and [CZ2746isback](https://github.com/CZ2746isback)
+
+## Sources
+
+The source code for FreeMyXe is available on:
+
+* [GitHub](https://github.com/FreeMyXe/FreeMyXe) (primary)
+* [Tangled](https://tangled.org/invoxiplaygames.uk/FreeMyXe)
