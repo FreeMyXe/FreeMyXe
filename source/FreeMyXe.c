@@ -15,6 +15,7 @@
 #include "fmx_locale.h"
 #include "inih.h"
 
+#define FMX_XELL_PATH "GAME:\\xell.bin"
 #define FMX_XELL1F_PATH "GAME:\\xell-1f.bin"
 #define FMX_XELL2F_PATH "GAME:\\xell-2f.bin"
 #define FMX_XELLGG_PATH "GAME:\\xell-gggggg.bin"
@@ -228,10 +229,15 @@ void NotificationPopup(wchar_t *text)
 static uint8_t xell_buffer[0x40000];
 void LaunchXell()
 {
-    int xell_file = FSOpenFile(FMX_XELL1F_PATH);
+    int xell_file = FSOpenFile(FMX_XELL_PATH);
     int xell_filesize = 0;
     int xell_bytesread = 0;
     int xell_2f = 0;
+    // check for 1f xell
+    if (xell_file == -1)
+    {
+        xell_file = FSOpenFile(FMX_XELL1F_PATH);
+    }
     // check for gggggg xell - works as of xell-reloaded commit 8d7b77e (Nov 9 2025)
     if (xell_file == -1)
     {
@@ -436,7 +442,7 @@ void __cdecl main()
     sprintf(cpu_key_string, "%08X%08X%08X%08X", *(uint32_t *)(cpu_key + 0x0), *(uint32_t *)(cpu_key + 0x4), *(uint32_t *)(cpu_key + 0x8), *(uint32_t *)(cpu_key + 0xC));
 
     // check if we have a xell file
-    has_xell = FSFileExists(FMX_XELL1F_PATH) || FSFileExists(FMX_XELL2F_PATH) || FSFileExists(FMX_XELLGG_PATH);
+    has_xell = FSFileExists(FMX_XELL_PATH) || FSFileExists(FMX_XELL1F_PATH) || FSFileExists(FMX_XELL2F_PATH) || FSFileExists(FMX_XELLGG_PATH);
 
     // if we're automatically launch xell but don't have xell, act like normal
     if (autoMode == autoMode_Xell && !has_xell)
