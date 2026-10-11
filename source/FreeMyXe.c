@@ -50,9 +50,9 @@ void ParseConfigFile(char *fileName, ini_handler handler)
 LocalisationMessages_t *currentLocalisation = &english;
 
 static LPWSTR buttons[1] = {L"OK"};
-static MESSAGEBOX_RESULT result;
-static XOVERLAPPED overlapped;
-static wchar_t dialog_text_buffer[256];
+static MESSAGEBOX_RESULT result = {0};
+static XOVERLAPPED overlapped = {0};
+static wchar_t dialog_text_buffer[256] = {0};
 
 void MessageBox(wchar_t *text)
 {
@@ -287,12 +287,14 @@ void GetRunningDirectory()
     }
 }
 
+unsigned char LoadImageDone = 0;
 unsigned int LoadImageResult = 0;
 unsigned int LaunchPluginThread(void *pluginName)
 {
     // Runs as a system thread
     char *pluginPath = (char *)pluginName;
     LoadImageResult = XexLoadImage(pluginPath, 8, 0, NULL);
+    LoadImageDone = 1;
     return 0;
 }
 
@@ -301,13 +303,16 @@ void LaunchPlugin(char *pluginName)
     char fullPath[255];
     HANDLE hThread;
     DWORD threadId;
+    LoadImageDone = 0;
+    LoadImageResult = 0;
     sprintf(fullPath, "%s\\%s", RunningFromDir, pluginName);
     DbgPrint("Launching sysmodule %s\n", fullPath);
     ExCreateThread(&hThread, 0, &threadId, (VOID*)XapiThreadStartup, (LPTHREAD_START_ROUTINE)LaunchPluginThread, (void *)fullPath, 0x2); // create system thread
     XSetThreadProcessor(hThread, 4);
     ResumeThread(hThread);
     CloseHandle(hThread);
-    Sleep(100); // if your DllMain takes longer than ~100ms, sorry :(
+    while (!LoadImageDone)
+        Sleep(20);
     DbgPrint("Loaded with result %08x\n", LoadImageResult);
 }
 
